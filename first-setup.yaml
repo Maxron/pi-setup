@@ -1,0 +1,49 @@
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: Ensure US locale exists
+    locale_gen: 
+      name: en_US.UTF-8
+      state: present
+ 
+  - name: Ensure TW locale exists
+    locale_gen: 
+      name: zh_TW.UTF-8
+      state: present
+  
+  - name: Change locale to US
+    command: localectl set-locale LANG=en_US.UTF-8
+
+  - name: Change timezone
+    timezone:
+      name: Asia/Taipei
+  
+  - name: Change keyboard layout
+    command: localectl set-keymap us
+  
+  - name: backup apt source list
+    command: cp /etc/apt/sources.list /etc/apt/sources.list.bak
+  
+  - name: Change apt source list
+    shell: >
+      sed -i 's/raspbian.raspberrypi.org/mirror.ossplanet.net\/raspbian/g' /etc/apt/sources.list
+
+  # - name: Change apt source list
+  #   shell: >
+  #     sed -i 's/raspbian.raspberrypi.org/free.nchc.org.tw\/raspbian/g' /etc/apt/sources.list
+  
+  - name: Upgrade packages
+    apt:
+      upgrade: yes 
+      update_cache: yes
+      state: present
+
+  - name: Install packages
+    apt:
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+      - vim
